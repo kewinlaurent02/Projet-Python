@@ -1,0 +1,33 @@
+import random
+
+# Caractères à utiliser
+maj = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+min = "abcdefghijklmnopqrstuvwxyz"
+num = "0123456789"
+spe = "!@#$%^&*()"
+
+# Tous les caractères ensemble
+tous = maj + min + num + spe
+
+# Longueur aléatoire entre 12 et 14
+longueur = random.randint(12, 14)
+
+# Créer la base du mot de passe avec au moins un de chaque type
+mdp_liste = [
+    random.choice(maj),
+    random.choice(min),
+    random.choice(num),
+    random.choice(spe)
+]
+
+# Ajouter les autres caractères aléatoires
+mdp_liste += [random.choice(tous) for _ in range (longueur)]
+
+# Mélanger la liste et convertir en chaîne
+random.shuffle(mdp_liste)
+mdp = ''.join(mdp_liste)
+
+
+# Afficher
+print("Mot de passe généré :", mdp)
+print(len(mdp))
