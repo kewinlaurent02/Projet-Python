@@ -1,0 +1,61 @@
+import pandas as pd
+import matplotlib.pyplot as plt
+import re
+
+def parse_line(line):
+    # Expression régulière pour parser une ligne du log Apache
+    pattern = r'(?P<ip>\d+\.\d+\.\d+\.\d+) - - \[(?P<datetime>[^\]]+)\] "(?P<method>\w+) (?P<url>.*?) HTTP/1.\d" (?P<status>\d{3}) \d+ "(?P<user_agent>.*)"'
+    match = re.match(pattern, line)
+    if match:
+        return match.groupdict()
+    return None
+
+def load_log(filename):
+    data = []
+    with open(filename, 'r') as f:
+        for line in f:
+            parsed = parse_line(line)
+            if parsed:
+                data.append(parsed)
+    return pd.DataFrame(data)
+
+def main():
+    # 1. Chargement
+    df = load_log("access.log")
+    print("📄 Aperçu des données :")
+    print(df.head())
+
+    # Convertir les types utiles
+    df["status"] = df["status"].astype(int)
+
+    # 2. Filtrer les erreurs 404
+    errors_404 = df[df["status"] == 404]
+
+    # 3. Top 5 IPs générant des 404
+    top_5 = errors_404["ip"].value_counts().head(5)
+    print("\n🔍 Top 5 IPs générant des erreurs 404 :")
+    print(top_5)
+
+    # 4. Visualisation
+    plt.figure(figsize=(8, 5))
+    top_5.plot(kind="bar", color="tomato")
+    plt.title("Top 5 IPs avec erreurs 404")
+    plt.xlabel("Adresse IP")
+    plt.ylabel("Nombre d'erreurs 404")
+    plt.grid(axis='y')
+    plt.tight_layout()
+    plt.show()
+
+    # BONUS – Détection de bots
+    bot_pattern = r"bot|crawler|spider"
+    bots = errors_404[errors_404["user_agent"].str.contains(bot_pattern, flags=re.IGNORECASE, na=False)]
+
+    percent_bots = len(bots) / len(errors_404) * 100 if len(errors_404) > 0 else 0
+    print(f"\n🤖 {len(bots)} erreurs 404 générées par des bots ({percent_bots:.1f}%)")
+
+    suspicious_ips = bots["ip"].value_counts()
+    print("\n🚨 IPs suspectes (bots) :")
+    print(suspicious_ips.head())
+
+if __name__ == "__main__":
+    main()
