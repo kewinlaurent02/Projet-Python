@@ -1,0 +1,26 @@
+import socket
+import argparse
+
+def scan_ports(ip, start_port, end_port):
+    print(f"🔍 Scan de {ip} ports {start_port} à {end_port}...\n")
+    for port in range(start_port, end_port + 1):
+        s = socket.socket()
+        s.settimeout(0.5)
+        try:
+            s.connect((ip, port))
+            print(f"[+] Port {port} is OPEN")
+        except socket.timeout:
+            pass
+        except socket.error:
+            pass
+        finally:
+            s.close()
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Mini-scanner de ports TCP")
+    parser.add_argument("--ip", required=True, help="Adresse IP à scanner")
+    parser.add_argument("--start-port", type=int, required=True, help="Port de début")
+    parser.add_argument("--end-port", type=int, required=True, help="Port de fin")
+    args = parser.parse_args()
+
+    scan_ports(args.ip, args.start_port, args.end_port)
