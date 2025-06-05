@@ -1,0 +1,67 @@
+import random
+import csv
+
+# Lire les mots de passe depuis le fichier CSV
+mots_de_passe_faibles = []
+with open("mot_de_passe.csv", newline='') as fichier_csv:
+    lecteur = csv.DictReader(fichier_csv)
+    for ligne in lecteur:
+        mot = ligne.get("mot_de_passe")
+        if mot:
+            mots_de_passe_faibles.append(mot)
+
+if not mots_de_passe_faibles:
+    print("❌ Le fichier est vide ou mal formaté.")
+    exit()
+
+mot_secret = random.choice(mots_de_passe_faibles)
+
+# Limite d'essais
+while True:
+    try:
+        limite = int(input("Combien d'essais voulez-vous ? "))
+        if limite <= 0:
+            print("Entrez un nombre positif.")
+            continue
+        break
+    except ValueError:
+        print("Entrez un nombre valide.")
+
+# Mode triche
+triche = input("Activer le mode triche ? (o/n) ").lower()
+if triche == "o":
+    print("[TRICHE] Mot de passe :", mot_secret)
+
+essais = 0
+historique = []
+
+while essais < limite:
+    tentative = input(f"Essai {essais+1} : ")
+    essais += 1
+    historique.append(tentative)
+
+    if tentative == mot_secret:
+        print(f"✅ Bravo ! Trouvé en {essais} essais.")
+        break
+    else:
+        print("❌ Mauvaise réponse.")
+
+        if len(tentative) > len(mot_secret):
+            print("Indice : le mot est plus COURT.")
+        elif len(tentative) < len(mot_secret):
+            print("Indice : le mot est plus LONG.")
+        else:
+            print("Indice : même longueur.")
+
+        if tentative and tentative[0] == mot_secret[0]:
+            print("Indice : même première lettre.")
+
+        communes = set(tentative) & set(mot_secret)
+        print("Indice : lettres communes →", ''.join(communes))
+
+if tentative != mot_secret:
+    print("\n❌ Échec. Le mot était :", mot_secret)
+
+print("\n📜 Historique des tentatives :")
+for i, essai in enumerate(historique, 1):
+    print(f"{i}. {essai}")
