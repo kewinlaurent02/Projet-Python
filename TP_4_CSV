@@ -1,0 +1,72 @@
+import socket
+import argparse
+import threading
+import csv
+from queue import Queue
+
+def scan_port(ip, port, verbose, results):
+    s = socket.socket()
+    s.settimeout(0.5)
+    try:
+        s.connect((ip, port))
+        print(f"[+] Port {port} is OPEN")
+        results.append((port, "OPEN"))
+    except socket.timeout:
+        if verbose:
+            print(f"[-] Port {port} timed out")
+        results.append((port, "CLOSED"))
+    except socket.error:
+        if verbose:
+            print(f"[-] Port {port} is CLOSED")
+        results.append((port, "CLOSED"))
+    finally:
+        s.close()
+
+def worker(ip, queue, verbose, results):
+    while not queue.empty():
+        port = queue.get()
+        scan_port(ip, port, verbose, results)
+        queue.task_done()
+
+def scan_ports_threaded(ip, start_port, end_port, verbose, threads_count=100):
+    ports = range(start_port, end_port + 1)
+    queue = Queue()
+    results = []
+
+    for port in ports:
+        queue.put(port)
+
+    threads = []
+    for _ in range(min(threads_count, len(ports))):
+        t = threading.Thread(target=worker, args=(ip, queue, verbose, results))
+        t.daemon = True
+        t.start()
+        threads.append(t)
+
+    queue.join()
+
+    return results
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Mini-scanner de ports TCP multithreadé")
+    parser.add_argument("--ip", required=True, help="Adresse IP à scanner")
+    parser.add_argument("--start-port", type=int, required=True, help="Port de début")
+    parser.add_argument("--end-port", type=int, required=True, help="Port de fin")
+    parser.add_argument("--verbose", action="store_true", help="Afficher aussi les ports fermés")
+    parser.add_argument("--output", help="Fichier CSV pour sauvegarder les résultats")
+    args = parser.parse_args()
+
+    print(f"🔍 Scan de {args.ip} ports {args.start_port} à {args.end_port}...\n")
+    results = scan_ports_threaded(args.ip, args.start_port, args.end_port, args.verbose)
+
+    open_ports = [str(port) for port, status in results if status == "OPEN"]
+
+    print(f"\n✅ Scan terminé. Ports ouverts : {', '.join(open_ports) if open_ports else 'Aucun'}")
+
+    if args.output:
+        with open(args.output, "w", newline="") as csvfile:
+            writer = csv.writer(csvfile)
+            writer.writerow(["Port", "Status"])
+            for port, status in sorted(results):
+                writer.writerow([port, status])
+        print(f"💾 Résultats sauvegardés dans {args.output}")
