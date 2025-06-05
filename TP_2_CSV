@@ -1,0 +1,40 @@
+import re
+import csv
+from collections import Counter
+
+# Lire le fichier auth.log
+with open("auth.log", "r") as fichier:
+    lignes = fichier.readlines()
+
+# Regex pour IP et utilisateur
+regex_ip = r"from (\d{1,3}(?:\.\d{1,3}){3})"
+regex_user = r"Failed password for (invalid user )?(\w+)"
+
+# Compteur pour (IP, utilisateur)
+tentatives = Counter()
+
+# Parcourir les lignes contenant "Failed password"
+for ligne in lignes:
+    if "Failed password" in ligne:
+        match_ip = re.search(regex_ip, ligne)
+        match_user = re.search(regex_user, ligne)
+
+        if match_ip and match_user:
+            ip = match_ip.group(1)
+            user = match_user.group(2)
+            cle = (ip, user)
+            tentatives[cle] += 1
+
+# Affichage des 5 premiers résultats
+print("🔐 Top 5 IP + utilisateur avec échecs de connexion :")
+for (ip, user), count in tentatives.most_common(5):
+    print(f"IP: {ip} | Utilisateur: {user} → {count} tentatives")
+
+# Export CSV
+with open("resultats.csv", "w", newline='') as fichier_csv:
+    writer = csv.writer(fichier_csv)
+    writer.writerow(["IP", "Utilisateur", "Tentatives"])
+    for (ip, user), count in tentatives.items():
+        writer.writerow([ip, user, count])
+
+print("\n📄 Données enregistrées dans 'resultats.csv'")
