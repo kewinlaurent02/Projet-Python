@@ -1,0 +1,71 @@
+import random
+
+# Liste des mots de passe faibles
+mots_de_passe_faibles = [
+    "123456", "password", "admin", "123456789", "qwerty", "abc123", "letmein",
+    "welcome", "monkey", "football"
+]
+
+# Sélection aléatoire
+mot_secret = random.choice(mots_de_passe_faibles)
+
+# Demander à l'utilisateur une limite d'essais
+limite_essais = int(input("Combien d'essais voulez-vous ? "))
+
+# Activer l'option triche
+triche = input("Activer le mode triche ? (o/n) ").lower()
+if triche == "o":
+  print("[TRICHE] Le mot de passe est :", mot_secret)
+
+# Initialisation
+essais = 0
+historique = []
+
+# Boucle de devinette
+while essais < limite_essais:
+  tentative = input(f"Tentative {essais + 1} - Devinez le mot de passe : ")
+  essais += 1
+  historique.append(tentative)
+
+  if tentative == mot_secret:
+    print("✅ Bravo ! Vous avez deviné le mot de passe en", essais, "essais.")
+    break
+  else:
+    print("❌ Mauvaise tentative.")
+
+    # Indices
+    if len(tentative) > len(mot_secret):
+      print("Indice : le mot est plus COURT.")
+    elif len(tentative) < len(mot_secret):
+      print("Indice : le mot est plus LONG.")
+    else:
+      print("Indice : même longueur.")
+
+    if tentative and tentative[0] == mot_secret[0]:
+      print("Indice : il commence par la même lettre.")
+
+    lettres_communes = set(tentative) & set(mot_secret)
+    print("Indice : lettres communes →", ''.join(lettres_communes))
+
+# Mot non trouvé
+if tentative != mot_secret:
+  print("\n❌ Vous avez utilisé tous vos essais.")
+  print("Le mot de passe était :", mot_secret)
+
+# Historique
+print("\n Historique des tentatives :")
+for i, mot in enumerate(historique, 1):
+  print(f"{i}. {mot}")
+
+
+mot_de_passe
+123456
+password
+admin
+123456789
+qwerty
+abc123
+letmein
+welcome
+monkey
+football
